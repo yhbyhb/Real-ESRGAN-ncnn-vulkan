@@ -326,7 +326,12 @@ void* proc(void* args)
         if (v.id == -233)
             break;
 
+        // duration 
+        auto start = std::chrono::high_resolution_clock::now();
         realesrgan->process(v.inimage, v.outimage);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        printf("input: %4d x %4d, output: %4d x %4d, duration: %6d ms\n", v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h, duration.count());
 
         tosave.put(v);
     }
