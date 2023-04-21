@@ -749,9 +749,16 @@ int main(int argc, char** argv)
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
-    std::string filename = "realesrgan-ncnn-vulkan-result.csv";
+    #define INFO_BUFFER_SIZE 32767
+    TCHAR  infoBuf[INFO_BUFFER_SIZE];
+    DWORD  bufCharCount = INFO_BUFFER_SIZE;
+    // Get and display the name of the computer.
+    if (!GetComputerName(infoBuf, &bufCharCount))
+        fprintf(stderr, TEXT("GetComputerName"));
+
+    std::string filename = "realesrgan-ncnn-vulkan-result_" + std::string(infoBuf) + ".csv";
     freopen(filename.c_str(), "a", stdout);
-    printf("input width, input height, output width, output height, tile size, duration(ms), heap usage(MB), heap budget(MB) 70%% for 4G+ 50%% for 4G-, device name\n");
+    printf("input width, input height, output width, output height, tile size, duration(ms), heap usage(MB), heap budget(MB), device name\n");
 
     ncnn::create_gpu_instance();
 
