@@ -339,8 +339,6 @@ void* proc(void* args)
         auto heap_budget = device->get_heap_budget();
         auto device_name = std::string(device->info.device_name());
         std::replace(device_name.begin(), device_name.end(), ' ', '_');
-
-            //printf("input: %4d x %4d, output: %4d x %4d, tile size: %d, duration: %6d ms, memory usage %d / %d MB\n",
         printf("%4d, %4d, %4d, %4d, %4d, %6d, %6d, %6d, %s\n",
             v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h,
             realesrgan->tilesize, duration.count(), 
@@ -751,12 +749,16 @@ int main(int argc, char** argv)
 
     #define INFO_BUFFER_SIZE 32767
     TCHAR  infoBuf[INFO_BUFFER_SIZE];
+    TCHAR  timeBuf[INFO_BUFFER_SIZE];
     DWORD  bufCharCount = INFO_BUFFER_SIZE;
     // Get and display the name of the computer.
     if (!GetComputerName(infoBuf, &bufCharCount))
         fprintf(stderr, TEXT("GetComputerName"));
 
-    std::string filename = "realesrgan-ncnn-vulkan-result_" + std::string(infoBuf) + ".csv";
+    std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::tm tm = *std::localtime(&t);
+    std::strftime(timeBuf, INFO_BUFFER_SIZE, "%Y%m%d-%H%M%S", &tm);
+    std::string filename = "realesrgan-ncnn-vulkan-result_" + std::string(infoBuf) + "_" + std::string(timeBuf) + ".csv";
     freopen(filename.c_str(), "a", stdout);
     printf("input width, input height, output width, output height, tile size, duration(ms), heap usage(MB), heap budget(MB), device name\n");
 
