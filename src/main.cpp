@@ -310,12 +310,14 @@ class ProcThreadParams
 {
 public:
     const RealESRGAN* realesrgan;
+    int device_index;
 };
 
 void* proc(void* args)
 {
     const ProcThreadParams* ptp = (const ProcThreadParams*)args;
     const RealESRGAN* realesrgan = ptp->realesrgan;
+    const int device_index = ptp->device_index;
 
     for (;;)
     {
@@ -326,12 +328,24 @@ void* proc(void* args)
         if (v.id == -233)
             break;
 
-        // duration 
+        // duration and memory usage
         auto start = std::chrono::high_resolution_clock::now();
         realesrgan->process(v.inimage, v.outimage);
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        printf("input: %4d x %4d, output: %4d x %4d, duration: %6d ms\n", v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h, duration.count());
+
+        auto device = ncnn::get_gpu_device(device_index);
+        auto heap_usage = device->get_heap_usage();
+        auto heap_budget = device->get_heap_budget();
+        auto device_name = std::string(device->info.device_name());
+        std::replace(device_name.begin(), device_name.end(), ' ', '_');
+
+            //printf("input: %4d x %4d, output: %4d x %4d, tile size: %d, duration: %6d ms, memory usage %d / %d MB\n",
+        printf("%4d, %4d, %4d, %4d, %4d, %6d, %6d, %6d, %s\n",
+            v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h,
+            realesrgan->tilesize, duration.count(), 
+            heap_usage, heap_budget, 
+            device_name.c_str());
 
         tosave.put(v);
     }
@@ -735,6 +749,10 @@ int main(int argc, char** argv)
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
+    std::string filename = "realesrgan-ncnn-vulkan-result.csv";
+    freopen(filename.c_str(), "a", stdout);
+    printf("input width, input height, output width, output height, tile size, duration(ms), heap usage(MB), heap budget(MB) 70%% for 4G+ 50%% for 4G-, device name\n");
+
     ncnn::create_gpu_instance();
 
     if (gpuid.empty())
@@ -829,6 +847,7 @@ int main(int argc, char** argv)
             for (int i=0; i<use_gpu_count; i++)
             {
                 ptp[i].realesrgan = realesrgan[i];
+                ptp[i].device_index = gpuid[i];
             }
 
             std::vector<ncnn::Thread*> proc_threads(total_jobs_proc);
