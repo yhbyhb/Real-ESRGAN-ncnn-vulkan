@@ -4,6 +4,8 @@
 // image decoder and encoder with WIC
 #include <wincodec.h>
 
+namespace {
+
 unsigned char* wic_decode_image(const wchar_t* filepath, int* w, int* h, int* c)
 {
     IWICImagingFactory* factory = 0;
@@ -176,7 +178,7 @@ int wic_encode_jpeg_image(const wchar_t* filepath, int w, int h, int c, void* bg
     int ret = 0;
 
     PROPBAG2 option = { 0 };
-    option.pstrName = L"ImageQuality";
+    option.pstrName = (LPOLESTR)L"ImageQuality";
     VARIANT varValue;
     VariantInit(&varValue);
     varValue.vt = VT_R4;
@@ -246,6 +248,8 @@ RETURN:
     if (factory) factory->Release();
 
     return ret;
+}
+
 }
 
 #endif // WIC_IMAGE_H

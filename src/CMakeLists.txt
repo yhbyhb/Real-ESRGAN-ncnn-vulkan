@@ -1,6 +1,6 @@
 cmake_policy(SET CMP0091 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 # -------------- Support C++17 for using filesystem  ------------------#
 # https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html
@@ -274,8 +274,7 @@ compile_shader(realesrgan_postproc_tta.comp)
 
 add_custom_target(generate-spirv DEPENDS ${SHADER_SPV_HEX_FILES})
 
-add_executable(realesrgan-ncnn-vulkan main.cpp realesrgan.cpp)
-
+add_library(realesrgan-ncnn-vulkan realesrgan.cpp realesrgan.h sr_ncnn_model.h)
 add_dependencies(realesrgan-ncnn-vulkan generate-spirv)
 
 set(REALESRGAN_LINK_LIBRARIES ncnn webp ${Vulkan_LIBRARY})

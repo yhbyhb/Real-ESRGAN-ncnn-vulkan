@@ -43,7 +43,12 @@ static const uint32_t realesrgan_postproc_tta_int8s_spv_data[] = {
     #include "realesrgan_postproc_tta_int8s.spv.hex.h"
 };
 
-RealESRGAN::RealESRGAN(int gpuid, bool _tta_mode)
+RealESRGAN::RealESRGAN(int gpuid, int tilesize, bool _ta_mode) :
+    gpuid(gpuid),
+    scale(4),
+    tilesize(tilesize),
+    prepadding(10),
+    tta_mode(tta_mode)
 {
     net.opt.use_vulkan_compute = true;
     net.opt.use_fp16_packed = true;
@@ -59,7 +64,6 @@ RealESRGAN::RealESRGAN(int gpuid, bool _tta_mode)
     bicubic_2x = 0;
     bicubic_3x = 0;
     bicubic_4x = 0;
-    tta_mode = _tta_mode;
 }
 
 RealESRGAN::~RealESRGAN()
@@ -592,4 +596,9 @@ int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
     net.vulkan_device()->reclaim_staging_allocator(staging_vkallocator);
 
     return 0;
+}
+
+int RealESRGAN::GetScale()
+{
+    return scale;
 }
