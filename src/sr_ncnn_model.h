@@ -14,7 +14,7 @@ public:
     virtual ~SRNCNNModel() = 0 {};
     virtual int load(const std::wstring& parampath, const std::wstring& modelpath) = 0;
     virtual int process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const = 0;
-    virtual int GetScale() = 0;
+    virtual int get_scale() = 0;
 };
 
 #endif // SR_NCNN_MODEL_H

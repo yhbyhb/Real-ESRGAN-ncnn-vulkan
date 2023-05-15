@@ -25,7 +25,7 @@ public:
 
     int process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const override;
 
-    int GetScale() override;
+    int get_scale() override;
 
 private:
     ncnn::Net net;

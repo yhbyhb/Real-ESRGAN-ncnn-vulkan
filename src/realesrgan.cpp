@@ -598,7 +598,7 @@ int RealESRGAN::process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const
     return 0;
 }
 
-int RealESRGAN::GetScale()
+int RealESRGAN::get_scale()
 {
     return scale;
 }
