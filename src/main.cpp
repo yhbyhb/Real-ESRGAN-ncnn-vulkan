@@ -311,6 +311,7 @@ class ProcThreadParams
 public:
     const RealESRGAN* realesrgan;
     int device_index;
+    int repeat_count;
 };
 
 void* proc(void* args)
@@ -318,6 +319,7 @@ void* proc(void* args)
     const ProcThreadParams* ptp = (const ProcThreadParams*)args;
     const RealESRGAN* realesrgan = ptp->realesrgan;
     const int device_index = ptp->device_index;
+    const int repeat_count = ptp->repeat_count;
 
     for (;;)
     {
@@ -328,22 +330,27 @@ void* proc(void* args)
         if (v.id == -233)
             break;
 
-        // duration and memory usage
-        auto start = std::chrono::high_resolution_clock::now();
-        realesrgan->process(v.inimage, v.outimage);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        for (size_t i = 0; i < repeat_count; i++)
+        {
+            // duration and memory usage
+            auto start = std::chrono::high_resolution_clock::now();
+            realesrgan->process(v.inimage, v.outimage);
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-        auto device = ncnn::get_gpu_device(device_index);
-        auto heap_usage = device->get_heap_usage();
-        auto heap_budget = device->get_heap_budget();
-        auto device_name = std::string(device->info.device_name());
-        std::replace(device_name.begin(), device_name.end(), ' ', '_');
-        printf("%4d, %4d, %4d, %4d, %4d, %6d, %6d, %6d, %s\n",
-            v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h,
-            realesrgan->tilesize, duration.count(), 
-            heap_usage, heap_budget, 
-            device_name.c_str());
+            auto device = ncnn::get_gpu_device(device_index);
+            auto heap_usage = device->get_heap_usage();
+            auto heap_budget = device->get_heap_budget();
+            auto device_name = std::string(device->info.device_name());
+            std::replace(device_name.begin(), device_name.end(), ' ', '_');
+            printf("%4d, %4d, %4d, %4d, %4d, %6d, %6d, %6d, %s\n",
+                v.inimage.w, v.inimage.h, v.outimage.w, v.outimage.h,
+                realesrgan->tilesize, duration.count(),
+                heap_usage, heap_budget,
+                device_name.c_str());
+
+            fprintf(stderr, "=== Done %d of %d ===\n", i + 1, repeat_count);
+        }
 
         tosave.put(v);
     }
@@ -463,12 +470,13 @@ int main(int argc, char** argv)
     int jobs_save = 2;
     int verbose = 0;
     int tta_mode = 0;
+    int repeatCount = 1;
     path_t format = PATHSTR("png");
 
 #if _WIN32
     setlocale(LC_ALL, "");
     wchar_t opt;
-    while ((opt = getopt(argc, argv, L"i:o:s:t:m:n:g:j:f:vxh")) != (wchar_t)-1)
+    while ((opt = getopt(argc, argv, L"i:o:s:t:m:n:g:j:f:r:vxh")) != (wchar_t)-1)
     {
         switch (opt)
         {
@@ -499,6 +507,9 @@ int main(int argc, char** argv)
             break;
         case L'f':
             format = optarg;
+            break;
+        case L'r':
+            repeatCount = _wtoi(optarg);
             break;
         case L'v':
             verbose = 1;
@@ -857,6 +868,7 @@ int main(int argc, char** argv)
             {
                 ptp[i].realesrgan = realesrgan[i];
                 ptp[i].device_index = gpuid[i];
+                ptp[i].repeat_count = repeatCount;
             }
 
             std::vector<ncnn::Thread*> proc_threads(total_jobs_proc);
