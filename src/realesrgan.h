@@ -24,8 +24,8 @@ public:
 #endif
 
     int process(const ncnn::Mat& inimage, ncnn::Mat& outimage) const override;
-
     int get_scale() override;
+    int get_tilesize() override;
 
 private:
     ncnn::Net net;

@@ -602,3 +602,8 @@ int RealESRGAN::get_scale()
 {
     return scale;
 }
+
+int RealESRGAN::get_tilesize()
+{
+    return tilesize;
+}
